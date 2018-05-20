@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package loadexchange;
+
+import "google/protobuf/timestamp.proto";
+
+// The greeting service definition.
+service LoadExchange {
+  // Get load information
+  rpc GetPodLoads(PodSelector) returns (stream PodLoads) {}
+}
+
+// Load Information
+message PodLoads {
+  google.protobuf.Timestamp recordTime = 1;
+  repeated PodLoad podLoads = 2;
+}
+
+message PodLoad {
+    bytes PodIP = 1;
+    uint32 load = 2;
+}
+
+// Currently only support select all
+message PodSelector {
+}
