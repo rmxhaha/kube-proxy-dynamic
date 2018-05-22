@@ -140,8 +140,10 @@ func (re *IPVSRuleEnforcer) Enforce(vss VirtualServers) error {
 		}
 
 		for _, ds := range toBeUpdated {
-			err := re.handle.UpdateDestination(vss[vsk].IPVSService, ds)
-			if err != nil { return err }
+			if !reflect.DeepEqual(vss[vsk].IPVSService, ds) {
+				err := re.handle.UpdateDestination(vss[vsk].IPVSService, ds)
+				if err != nil { return err }
+			}
 		}
 	}
 
