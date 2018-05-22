@@ -59,7 +59,6 @@ func (lcw *worker) CollectTillDie() error {
 			}
 
 
-			fmt.Printf("[%s] New Info\n", lcw.targetURL)
 			lcw.ApplyToStore(in, lcw.targetURL)
 		}
 	}()
