@@ -5,12 +5,13 @@ import (
 	"time"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/mem"
-	"github.com/shirou/gopsutil/disk"
 	"github.com/rmxhaha/kube-proxy-dynamic/pkg/load/host/network"
+	"github.com/rmxhaha/kube-proxy-dynamic/pkg/load/host/disk"
 )
 
 type Provider struct {
 	networkRateProvider *network.NetworkRateProvider
+	diskStatProvider *disk.DiskStatProvider
 }
 
 func New() (*Provider, error) {
@@ -19,7 +20,14 @@ func New() (*Provider, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	dsp, err := disk.NewDiskStatProvider(500 * time.Millisecond)
+	if err != nil {
+		return nil, err
+	}
+
 	n.networkRateProvider = nrp
+	n.diskStatProvider = dsp
 
 	return n, nil
 }
@@ -64,7 +72,17 @@ func (p *Provider) GetNetworkMaxUsage() (float64, error){
 	return maxUsage, nil
 }
 
-func (p *Provider) GetFSUsage() (float64, error) {
-	disk.Usage()
 
+
+func (p *Provider) GetFSUsage() (float64, error) {
+	stats := p.diskStatProvider.GetDiskUtilStat()
+	maxutil := 0.0
+
+	for _, util := range stats {
+		if maxutil < util {
+			maxutil = util
+		}
+	}
+
+	return maxutil, nil
 }

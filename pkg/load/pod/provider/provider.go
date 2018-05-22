@@ -81,6 +81,7 @@ func (plp *Provider) GetPodLoads() (*pb.PodLoads, error) {
 	var hostCPUPercent int64 = 0
 	var hostMemoryPercent int64 = 0
 	var hostNetworkPercent int64 = 0
+	var hostFSPercent int64 = 0
 
 	hostcpuval, err := plp.hostLoadProvider.GetCPUUsage()
 	if err != nil {
@@ -104,6 +105,14 @@ func (plp *Provider) GetPodLoads() (*pb.PodLoads, error) {
 	} else {
 		hostNetworkPercent = int64(hostnetworkval * math.MaxUint16)
 		if hostPercent < hostNetworkPercent { hostPercent = hostNetworkPercent}
+	}
+
+	hostfsval, err := plp.hostLoadProvider.GetFSUsage()
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		hostFSPercent = int64(hostfsval * math.MaxUint16)
+		if hostPercent < hostFSPercent { hostPercent = hostFSPercent }
 	}
 
 	summary, err := kubeletsummary.GetLocalSummary()
@@ -172,6 +181,10 @@ func (plp *Provider) GetPodLoads() (*pb.PodLoads, error) {
 			if maxPercent < hostNetworkPercent {
 				maxPercent = hostNetworkPercent
 			}
+
+			if maxPercent < hostFSPercent {
+				maxPercent = hostFSPercent
+			}
 		}
 
 		// assume metrics not yet ready.
@@ -185,7 +198,6 @@ func (plp *Provider) GetPodLoads() (*pb.PodLoads, error) {
 		fmt.Println(pod.Name, pod.Status.PodIP, maxPercent)
 		podLoads.PodLoads = append(podLoads.PodLoads, podLoad)
 	}
-
 
 	recordTime, err := ptypes.TimestampProto(time.Now())
 
