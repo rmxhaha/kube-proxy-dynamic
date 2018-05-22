@@ -58,34 +58,42 @@ func NewLoadBalancer(clientset kubernetes.Interface, dialPort int, dialOpts []gr
 	return lb, nil
 }
 
-type IPPort struct {
+type Endpoint struct {
 	IP net.IP
 	Port uint16
+	Weight uint16
 }
 
 func (lb *LoadBalancer) Sync(){
-	wstore := weightstore.NewWeightStore(lb.podloadstore)
-	wstore.Lock()
-	defer wstore.Unlock()
+	wprocessor := weightstore.NewWeightProcessor(lb.podloadstore)
 
 	vss := utilipvs.VirtualServers{}
 
 	// map[ endpoint namespace, name, port/name ] = [ ip, port ]
-	endpointsMap := map[string][] IPPort {}
+	endpointsMap := map[string][] Endpoint{}
 
 	for _, ep := range lb.endpointInformer.GetStore().List() {
 		endpoints := ep.(*corev1.Endpoints)
 
+		var ips []string
+		for _, ss := range endpoints.Subsets {
+			for _, addr := range ss.Addresses {
+				ips = append( ips, addr.IP )
+			}
+		}
+
+		weights := wprocessor.GetWeights(ips)
+
 		for _, ss := range endpoints.Subsets {
 			for _, addr := range ss.Addresses {
 				for _, port := range ss.Ports {
-					ipport := IPPort{ IP: net.ParseIP(addr.IP), Port: uint16(port.Port) }
+					endpoint := Endpoint{ IP: net.ParseIP(addr.IP), Port: uint16(port.Port), Weight: uint16(weights[addr.IP]) }
 					namespacedName := endpoints.Namespace+endpoints.Name
 					ipproto := string(port.Protocol)+string(port.Port)
 					nameproto := string(port.Protocol)+port.Name
 
-					endpointsMap[namespacedName+ipproto] = append(endpointsMap[namespacedName+ipproto], ipport)
-					endpointsMap[namespacedName+nameproto] = append(endpointsMap[namespacedName+nameproto], ipport)
+					endpointsMap[namespacedName+ipproto] = append(endpointsMap[namespacedName+ipproto], endpoint)
+					endpointsMap[namespacedName+nameproto] = append(endpointsMap[namespacedName+nameproto], endpoint)
 				}
 			}
 		}
@@ -125,7 +133,7 @@ func (lb *LoadBalancer) Sync(){
 
 			namespacedName := srv.Namespace+srv.Name
 
-			var eps []IPPort
+			var eps []Endpoint
 			if p.TargetPort.Type == intstr.Int {
 				portid := string(p.Protocol)+string(p.TargetPort.IntVal)
 				eps = endpointsMap[namespacedName+portid]
@@ -138,7 +146,7 @@ func (lb *LoadBalancer) Sync(){
 				d := &ipvs.Destination{
 					Address: ep.IP,
 					Port: ep.Port,
-					Weight: int(wstore.GetWeight(ep.IP.String())),
+					Weight: int(ep.Weight),
 				}
 				vs.AddDestination(d)
 			}
