@@ -32,7 +32,7 @@ func New() (*Provider, error) {
 	return n, nil
 }
 
-func (p *Provider) GetCPUUsage() (float64, error) {
+func (p *Provider) GetCPUUtil() (float64, error) {
 	cpupercents, err := cpu.Percent(0, false)
 	if err != nil {
 		return 0, nil
@@ -41,7 +41,7 @@ func (p *Provider) GetCPUUsage() (float64, error) {
 	return cpupercents[0]/100, nil
 }
 
-func (p *Provider) GetMemoryUsage() (float64, error) {
+func (p *Provider) GetMemoryUtil() (float64, error) {
 	memo, err := mem.VirtualMemory()
 
 	if err != nil {
@@ -52,7 +52,7 @@ func (p *Provider) GetMemoryUsage() (float64, error) {
 }
 
 // id can be ipv4, ipv6, or interface name
-func (p *Provider) GetNetworkUsage(id string) (float64, error){
+func (p *Provider) GetNetworkUtil(id string) (float64, error){
 	networkRateStats := p.networkRateProvider.GetNetworkRateStats()
 	if v, ok := networkRateStats[id]; ok {
 		return v.NaiveUsage/100, nil
@@ -61,7 +61,7 @@ func (p *Provider) GetNetworkUsage(id string) (float64, error){
 	}
 }
 
-func (p *Provider) GetNetworkMaxUsage() (float64, error){
+func (p *Provider) GetNetworkMaxUtil() (float64, error){
 	networkRateStats := p.networkRateProvider.GetNetworkRateStats()
 	var maxUsage float64 = 0.0
 	for _, stat := range networkRateStats {
@@ -74,7 +74,7 @@ func (p *Provider) GetNetworkMaxUsage() (float64, error){
 
 
 
-func (p *Provider) GetFSUsage() (float64, error) {
+func (p *Provider) GetFSUtil() (float64, error) {
 	stats := p.diskStatProvider.GetDiskUtilStat()
 	maxutil := 0.0
 

@@ -83,7 +83,7 @@ func (plp *Provider) GetPodLoads() (*pb.PodLoads, error) {
 	var hostNetworkPercent int64 = 0
 	var hostFSPercent int64 = 0
 
-	hostcpuval, err := plp.hostLoadProvider.GetCPUUsage()
+	hostcpuval, err := plp.hostLoadProvider.GetCPUUtil()
 	if err != nil {
 		fmt.Println(err)
 	} else {
@@ -91,7 +91,7 @@ func (plp *Provider) GetPodLoads() (*pb.PodLoads, error) {
 		if hostPercent < hostCPUPercent { hostPercent = hostCPUPercent}
 	}
 
-	hostmemoryval, err := plp.hostLoadProvider.GetMemoryUsage()
+	hostmemoryval, err := plp.hostLoadProvider.GetMemoryUtil()
 	if err != nil {
 		fmt.Println(err)
 	} else {
@@ -99,7 +99,7 @@ func (plp *Provider) GetPodLoads() (*pb.PodLoads, error) {
 		if hostPercent < hostMemoryPercent { hostPercent = hostMemoryPercent}
 	}
 
-	hostnetworkval, err := plp.hostLoadProvider.GetNetworkUsage(plp.HostIP)
+	hostnetworkval, err := plp.hostLoadProvider.GetNetworkUtil(plp.HostIP)
 	if err != nil {
 		fmt.Println(err)
 	} else {
@@ -107,7 +107,7 @@ func (plp *Provider) GetPodLoads() (*pb.PodLoads, error) {
 		if hostPercent < hostNetworkPercent { hostPercent = hostNetworkPercent}
 	}
 
-	hostfsval, err := plp.hostLoadProvider.GetFSUsage()
+	hostfsval, err := plp.hostLoadProvider.GetFSUtil()
 	if err != nil {
 		fmt.Println(err)
 	} else {
@@ -195,7 +195,6 @@ func (plp *Provider) GetPodLoads() (*pb.PodLoads, error) {
 		ip := net.ParseIP(pod.Status.PodIP).To4()
 
 		podLoad := &pb.PodLoad{PodIP: []byte(ip), Load: uint32(maxPercent)}
-		fmt.Println(pod.Name, pod.Status.PodIP, maxPercent)
 		podLoads.PodLoads = append(podLoads.PodLoads, podLoad)
 	}
 
