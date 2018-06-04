@@ -18,6 +18,8 @@ var (
 	port       = flag.Int("port", 14156, "the server port")
 	kubeconfig = flag.String("kubeconfig","/var/lib/load-exchange-server/kubeconfig", "Kubeconfig to access kubernetes API")
 	updateInterval = flag.Duration("update-interval",500 * time.Millisecond, "IPVS Synchronize period")
+	weightrange = flag.Uint("weight-range",10, "IPVS weight range from 1 to wr+1")
+	enforcedeleteservice = flag.Bool("enforce-delete-service", true, "Enforces service deletion")
 )
 
 
@@ -46,7 +48,7 @@ func main(){
 		opts = append(opts, grpc.WithInsecure())
 	}
 
-	lb, err := loadbalancer.NewLoadBalancer(clientset, *port, opts)
+	lb, err := loadbalancer.NewLoadBalancer(clientset, *port, opts, uint16(*weightrange), *enforcedeleteservice)
 	if err != nil {
 		log.Fatal(err)
 	}

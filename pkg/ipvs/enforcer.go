@@ -7,7 +7,7 @@ import (
 
 type IPVSRuleEnforcer struct {
 	handle *ipvs.Handle
-
+	enforcedeleteservice bool
 }
 
 func (re *IPVSRuleEnforcer) getCurrentVirtualServers() (VirtualServers, error) {
@@ -86,12 +86,12 @@ func intersect2(vss1 Destinations, vss2 Destinations) Destinations {
 	return result
 }
 
-func NewEnforcer() (*IPVSRuleEnforcer, error) {
+func NewEnforcer(enforcedeleteservice bool) (*IPVSRuleEnforcer, error) {
 	handle, err := ipvs.New("")
 
 	if err != nil { return nil, err }
 
-	return &IPVSRuleEnforcer{ handle }, nil
+	return &IPVSRuleEnforcer{ handle: handle, enforcedeleteservice: enforcedeleteservice }, nil
 }
 
 func (re *IPVSRuleEnforcer) Enforce(vss VirtualServers) error {
@@ -113,9 +113,11 @@ func (re *IPVSRuleEnforcer) Enforce(vss VirtualServers) error {
 		}
 	}
 
-	for _, s := range toBeDeleted {
-		err := re.handle.DelService(s.IPVSService)
-		if err != nil { return err }
+	if re.enforcedeleteservice {
+		for _, s := range toBeDeleted {
+			err := re.handle.DelService(s.IPVSService)
+			if err != nil { return err }
+		}
 	}
 
 	for vsk := range toBeDeeperChecked {

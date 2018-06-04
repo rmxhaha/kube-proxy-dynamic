@@ -24,15 +24,16 @@ type LoadBalancer struct {
 	podloadstore *podloadstore.Store
 	endpointInformer cache.SharedIndexInformer
 	serviceInformer cache.SharedIndexInformer
+	weightprocessor *weightstore.WeightProcessor
 }
 
-func NewLoadBalancer(clientset kubernetes.Interface, dialPort int, dialOpts []grpc.DialOption) (*LoadBalancer, error) {
+func NewLoadBalancer(clientset kubernetes.Interface, dialPort int, dialOpts []grpc.DialOption, weightrange uint16, enforcedeleteservice bool) (*LoadBalancer, error) {
 	lb := &LoadBalancer{}
 
 	store := podloadstore.New()
 
 
-	enforcer, err := utilipvs.NewEnforcer()
+	enforcer, err := utilipvs.NewEnforcer(enforcedeleteservice)
 	if err != nil {
 		return nil, err
 	}
@@ -54,6 +55,8 @@ func NewLoadBalancer(clientset kubernetes.Interface, dialPort int, dialOpts []gr
 	lb.collector = collector
 	lb.serviceInformer = serviceInformer
 	lb.endpointInformer = endpointInformer
+	lb.weightprocessor = weightstore.NewWeightProcessor(lb.podloadstore, weightrange)
+
 
 	return lb, nil
 }
@@ -65,8 +68,7 @@ type Endpoint struct {
 }
 
 func (lb *LoadBalancer) Sync(){
-	wprocessor := weightstore.NewWeightProcessor(lb.podloadstore)
-
+	wprocessor := lb.weightprocessor
 	vss := utilipvs.VirtualServers{}
 
 	// map[ endpoint namespace, name, port/name ] = [ ip, port ]
@@ -87,7 +89,13 @@ func (lb *LoadBalancer) Sync(){
 		for _, ss := range endpoints.Subsets {
 			for _, addr := range ss.Addresses {
 				for _, port := range ss.Ports {
-					endpoint := Endpoint{ IP: net.ParseIP(addr.IP), Port: uint16(port.Port), Weight: uint16(weights[addr.IP]) }
+					var weight uint16 = 1
+
+					if w, ok := weights[addr.IP]; ok{
+						weight = uint16(w)
+					}
+
+					endpoint := Endpoint{ IP: net.ParseIP(addr.IP), Port: uint16(port.Port), Weight: weight }
 					namespacedName := endpoints.Namespace+endpoints.Name
 					ipproto := string(port.Protocol)+string(port.Port)
 					nameproto := string(port.Protocol)+port.Name

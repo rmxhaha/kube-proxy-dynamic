@@ -9,9 +9,15 @@ import (
 
 type WeightProcessor struct {
 	podloadstore *podloadstore.Store
+	weightrange uint16
 }
 
 func (processor *WeightProcessor) GetWeights(ips []string) map[string]uint8 {
+	return processor.getweights(ips, time.Now())
+}
+
+
+func (processor *WeightProcessor) getweights(ips []string, now time.Time) map[string]uint8 {
 	m := processor.podloadstore.GetMap()
 	weights := map[string]uint8 {}
 
@@ -34,7 +40,7 @@ func (processor *WeightProcessor) GetWeights(ips []string) map[string]uint8 {
 
 	var sumagenano int64 = 0
 	for _, pl := range podloads {
-		d := time.Since(pl.RecordTime)
+		d := now.Sub(pl.RecordTime)
 		sumagenano += d.Nanoseconds()
 	}
 
@@ -77,15 +83,19 @@ func (processor *WeightProcessor) GetWeights(ips []string) map[string]uint8 {
 	}
 
 	for i := 0; i < l; i ++ {
-		weights[podloads[i].PodIP] = uint8( fweights[i] / maxfweight * 40 )
+		weights[podloads[i].PodIP] = uint8( 1 + fweights[i] / maxfweight * float64(processor.weightrange) )
+	}
+
+	for i := l; i < len(podloads); i++ {
+		weights[podloads[i].PodIP] = uint8(1) // default to one if not
 	}
 
 	return weights
 }
 
 
-func NewWeightProcessor(store *podloadstore.Store) (*WeightProcessor) {
-	wstore := &WeightProcessor{ podloadstore: store }
+func NewWeightProcessor(store *podloadstore.Store, weightrange uint16) (*WeightProcessor) {
+	wstore := &WeightProcessor{ podloadstore: store, weightrange: weightrange }
 
 	return wstore
 }
