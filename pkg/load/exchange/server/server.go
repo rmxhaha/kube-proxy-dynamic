@@ -49,8 +49,6 @@ func (les *Server) Run() {
 func (les*Server) GetPodLoads(selector *pb.PodSelector, stream pb.LoadExchange_GetPodLoadsServer) error {
 	worker := newWorker()
 
-	wid := len(les.workers)
-
 	les.workerMutex.Lock()
 	les.workers = append(les.workers, worker)
 	les.workerMutex.Unlock()
@@ -67,7 +65,6 @@ func (les*Server) GetPodLoads(selector *pb.PodSelector, stream pb.LoadExchange_G
 	for {
 		select {
 		case msg := <- worker.Source:
-			fmt.Printf("send %d\n", wid)
 			err := stream.Send(msg)
 			if err != nil {
 				return err
