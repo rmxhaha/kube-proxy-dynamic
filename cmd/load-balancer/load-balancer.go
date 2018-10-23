@@ -41,7 +41,7 @@ func main(){
 		}
 		creds, err := credentials.NewClientTLSFromFile(*caFile, *serverHostOverride)
 		if err != nil {
-			log.Fatalf("Failed to create TLS credentials %v", err)
+			log.Fatalf("Failed to create TLS credentials with error %v", err)
 		}
 		opts = append(opts, grpc.WithTransportCredentials(creds))
 	} else {
@@ -50,7 +50,7 @@ func main(){
 
 	lb, err := loadbalancer.NewLoadBalancer(clientset, *port, opts, uint16(*weightrange), *enforcedeleteservice)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed to create new load balancer with error %v", err)
 	}
 
 	lb.SyncLoop(*updateInterval)
