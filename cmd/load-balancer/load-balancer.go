@@ -12,13 +12,13 @@ import (
 )
 
 var (
-	tls        = flag.Bool("tls", false, "Connection uses TLS if true, else plain TCP")
-	caFile             = flag.String("ca-file", "", "The file containning the CA root cert file")
-	serverHostOverride = flag.String("server-host-override", "x.test.youtube.com", "The server name use to verify the hostname returned by TLS handshake")
-	port       = flag.Int("port", 14156, "the server port")
-	kubeconfig = flag.String("kubeconfig","/var/lib/load-exchange-server/kubeconfig", "Kubeconfig to access kubernetes API")
-	updateInterval = flag.Duration("update-interval",500 * time.Millisecond, "IPVS Synchronize period")
-	weightrange = flag.Uint("weight-range",10, "IPVS weight range from 1 to wr+1")
+	tls                  = flag.Bool("tls", false, "Connection uses TLS if true, else plain TCP")
+	caFile               = flag.String("ca-file", "", "The file containning the CA root cert file")
+	serverHostOverride   = flag.String("server-host-override", "x.test.youtube.com", "The server name use to verify the hostname returned by TLS handshake")
+	port                 = flag.Int("port", 14156, "the server port")
+	kubeconfig           = flag.String("kubeconfig","/var/lib/load-exchange-server/kubeconfig", "Kubeconfig to access kubernetes API")
+	updateInterval       = flag.Duration("update-interval",500 * time.Millisecond, "IPVS Synchronize period")
+	weightrange          = flag.Uint("weight-range",10, "IPVS weight range from 1 to wr+1")
 	enforcedeleteservice = flag.Bool("enforce-delete-service", true, "Enforces service deletion")
 )
 
@@ -50,7 +50,7 @@ func main(){
 
 	lb, err := loadbalancer.NewLoadBalancer(clientset, *port, opts, uint16(*weightrange), *enforcedeleteservice)
 	if err != nil {
-		log.Fatal("Failed to create new load balancer with error %v", err)
+		log.Fatalf("Failed to create new load balancer with error %v", err)
 	}
 
 	lb.SyncLoop(*updateInterval)
