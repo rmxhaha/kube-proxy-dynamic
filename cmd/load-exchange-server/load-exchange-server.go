@@ -6,7 +6,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/kubernetes"
 	"log"
-
 	"net"
 	"fmt"
 	"google.golang.org/grpc"
@@ -16,11 +15,11 @@ import (
 )
 
 var (
-	tls        = flag.Bool("tls", false, "Connection uses TLS if true, else plain TCP")
-	certFile   = flag.String("cert-file", "", "The TLS cert file")
-	keyFile    = flag.String("key-file", "", "The TLS key file")
-	port       = flag.Int("port", 14156, "The server port")
-	kubeconfig = flag.String("kubeconfig","/var/lib/load-exchange-server/kubeconfig", "Kubeconfig to access kubernetes API")
+	tls            = flag.Bool("tls", false, "Connection uses TLS if true, else plain TCP")
+	certFile       = flag.String("cert-file", "", "The TLS cert file")
+	keyFile        = flag.String("key-file", "", "The TLS key file")
+	port           = flag.Int("port", 14156, "The server port")
+	kubeconfig     = flag.String("kubeconfig","/var/lib/load-exchange-server/kubeconfig", "Kubeconfig to access kubernetes API")
 	updateInterval = flag.Duration("update-interval", 500 * time.Millisecond,"how often should server sends podloads")
 )
 
@@ -69,5 +68,4 @@ func main(){
 	grpcServer := grpc.NewServer(opts...)
 	pb.RegisterLoadExchangeServer(grpcServer, loadExchangeServer)
 	grpcServer.Serve(lis)
-
 }
