@@ -87,7 +87,8 @@ func (processor *WeightProcessor) getweights(ips []string, now time.Time) map[st
 	}
 
 	for i := l; i < len(podloads); i++ {
-		weights[podloads[i].PodIP] = uint8(1) // default to one if not
+                // default to one if not found
+		weights[podloads[i].PodIP] = uint8(1) 
 	}
 
 	return weights
