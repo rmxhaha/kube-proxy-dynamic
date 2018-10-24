@@ -22,6 +22,7 @@ func New() *Store {
 }
 
 func (store *Store) Add(podLoad *PodLoad){
+        # make sure this parallel thing doesn't F itself
 	store.Lock()
 	store.m[podLoad.PodIP] = podLoad
 	store.Unlock()
